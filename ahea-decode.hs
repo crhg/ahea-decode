@@ -66,7 +66,8 @@ data AHEAData =
         parity       :: Int,
         dat          :: [Int]
     } |
-    AHEARepeat
+    AHEARepeat |
+    AHEAUnexpected AHEAToken
     deriving (Show)
 
 decodeTokenList :: [AHEAToken] -> [AHEAData]
@@ -79,7 +80,7 @@ decodeTokenList (Leader:xs) = frame:(decodeTokenList ws) where
     ws = takeTrailer vs
     frame = AHEAFrame customerCode parity (data0:dat)
 decodeTokenList (RepeatToken:xs) = AHEARepeat:(decodeTokenList xs)
-decodeTokenList (_:xs) = decodeTokenList xs
+decodeTokenList (x:xs) = (AHEAUnexpected x):(decodeTokenList xs)
 
 -- AHEATokenの先頭から指定されたビット数の整数を取り出します
 takeBit :: Int -> [AHEAToken] -> (Int, [AHEAToken])
