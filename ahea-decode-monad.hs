@@ -77,8 +77,8 @@ shift = do
     case r of
         x:xs -> do
             put xs
-            return (Just x)
-        _ -> do
+            return $ Just x
+        _ ->
             return Nothing
 
 -- アクションが失敗(Nothing)を返したときはアクション内で状態変化があっても呼ぶ前の状態に戻す
@@ -90,38 +90,36 @@ try action = do
         Nothing -> do
             put s
             return Nothing
-        _ -> do
+        _ ->
             return result
 
 takeBitList :: Int -> State [AHEAToken] (Maybe [Int])
-takeBitList 0 = do
+takeBitList 0 =
     return (Just [])
 takeBitList n = try $ do
     b  <- shift
     bs <- takeBitList (n - 1)
     case (b, bs) of
-        (Just (Bit b'), Just bs') -> return (Just (b':bs'))
+        (Just (Bit b'), Just bs') -> return $ Just (b':bs')
         _                         -> return Nothing
 
 takeBit :: Int -> State [AHEAToken] (Maybe Int)
 takeBit n = try $ do
-    do
-        bits <- takeBitList n
-        case bits of
-            Just bits' -> return $ Just $ bitsToInt bits'
-            _          -> return $ Nothing
+    bits <- takeBitList n
+    case bits of
+        Just bits' -> return $ Just $ bitsToInt bits'
+        _          -> return $ Nothing
 
 bitsToInt :: [Int] -> Int
 bitsToInt [] = 0
 bitsToInt (b:bs) = b + 2 * bitsToInt bs
 
 takeLeader:: State [AHEAToken] (Maybe ())
-takeLeader = try $do
-    do
-        x <- shift
-        case x of
-            Just(Leader) -> return $ Just ()
-            _            -> return $ Nothing
+takeLeader = try $ do
+    x <- shift
+    case x of
+        Just(Leader) -> return $ Just ()
+        _            -> return $ Nothing
 
 takeTrailer:: State [AHEAToken] (Maybe ())
 takeTrailer = try $ do
@@ -171,7 +169,7 @@ takeAHEAUnexpected = try $ do
 -- 引数に与えられたアクションを順に適用して最初に成功した物を返す。
 -- 全て失敗したら失敗
 tryAny :: [State s (Maybe a)] -> State s (Maybe a)
-tryAny [] = do return Nothing 
+tryAny [] = return Nothing 
 tryAny (act:acts) = try $ do
     r <- act
     case r of
@@ -189,7 +187,7 @@ tryWhile action = do
         Just r'-> do
             rs <- tryWhile action
             return (r':rs)
-        _ -> do
+        _ ->
             return []
 
 -- AHEAフォーマットの赤外線リモコンによるIRKit形式のjson文字列をデコードします
