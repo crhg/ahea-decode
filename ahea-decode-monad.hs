@@ -133,12 +133,12 @@ takeTrailer = try $ do
 takeOctets :: State [AHEAToken] [Int]
 takeOctets = do
     octet <- takeBit 8
-    r <- case octet of
+    case octet of
         Just octet' -> do
             octets <- takeOctets
             return (octet':octets)
-        _ -> do return []
-    return r
+        _ -> 
+            return []
 
 takeAHEAFrame :: State [AHEAToken] (Maybe AHEAData)
 takeAHEAFrame = try $ do
@@ -174,24 +174,23 @@ tryAny :: [State s (Maybe a)] -> State s (Maybe a)
 tryAny [] = do return Nothing 
 tryAny (act:acts) = try $ do
     r <- act
-    r' <- case r of
-        Just _ -> do return r
+    case r of
+        Just _ -> 
+            return r
         _ -> do
-            r'' <- tryAny acts
-            return r''
-    return r'
+            r' <- tryAny acts
+            return r'
 
 -- Maybeを返すactionが成功する間状態にactionを適用していき得られた結果をリストにして返す
 tryWhile :: (State s (Maybe a)) -> State s [a]
 tryWhile action = do
     r  <- action
-    rs <- case r of
+    case r of
         Just r'-> do
-            rs' <- tryWhile action
-            return (r':rs')
+            rs <- tryWhile action
+            return (r':rs)
         _ -> do
             return []
-    return rs
 
 -- AHEAフォーマットの赤外線リモコンによるIRKit形式のjson文字列をデコードします
 decodeAHEAJson :: LBS.ByteString -> [AHEAData]
@@ -203,5 +202,5 @@ decodeAHEAJson json = evalState action tokenList where
 decodeAHEAJsonFile :: String -> IO()
 decodeAHEAJsonFile filename = do 
     jsonString <- LBS.readFile filename
-    putStr $ show $ decodeAHEAJson $ jsonString
+    putStrLn $ show $ decodeAHEAJson $ jsonString
 
